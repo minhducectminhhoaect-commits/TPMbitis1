@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>TPM Bitis System</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: -apple-system, sans-serif; background: #f2f4f8; margin: 0; padding: 10px; color: #333; }
+        .card { background: white; padding: 15px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 15px; }
+        .hidden { display: none !important; }
+        input, select, textarea, button { width: 100%; padding: 12px; margin-bottom: 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 16px; box-sizing: border-box; }
+        button { background: #0056b3; color: white; border: none; font-weight: 600; cursor: pointer; }
+        button.secondary { background: #6c757d; }
+        button.logout { background: transparent; color: #dc3545; border: 1px solid #dc3545; margin-top: 10px; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .role-badge { background: #e3f2fd; color: #0d47a1; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }
+        .alert-box { background: #ffebee; border: 2px solid #d32f2f; padding: 15px; border-radius: 8px; margin-bottom: 15px; color: #c62828; animation: pulse 1s infinite; }
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(211, 47, 47, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(211, 47, 47, 0); } 100% { box-shadow: 0 0 0 0 rgba(211, 47, 47, 0); } }
+        
+        .ticket-item { border-left: 5px solid #ccc; padding: 12px; background: #fff; margin-bottom: 10px; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); position: relative; }
+        .ticket-item.open { border-left-color: #dc3545; } .ticket-item.assigned { border-left-color: #ffc107; } .ticket-item.fixed { border-left-color: #17a2b8; } .ticket-item.done { border-left-color: #28a745; }
+        .status-tag { position: absolute; top: 12px; right: 12px; font-size: 11px; padding: 2px 6px; border-radius: 4px; color: white; font-weight: bold; }
+        .tag-open { background: #dc3545; } .tag-assigned { background: #ffc107; color: #333; } .tag-fixed { background: #17a2b8; } .tag-done { background: #28a745; }
+        
+        .detail-row { display: flex; border-bottom: 1px solid #eee; padding: 8px 0; }
+        .detail-label { flex: 1; font-weight: bold; color: #555; font-size: 14px; }
+        .detail-val { flex: 2; font-size: 14px; text-align: right; }
+        .tabs { display: flex; margin-bottom: 15px; background: #e9ecef; border-radius: 8px; padding: 4px; }
+        .tab { flex: 1; text-align: center; padding: 10px; border-radius: 6px; font-weight: 600; cursor: pointer; color: #666; font-size: 13px; }
+        .tab.active { background: white; color: #0056b3; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .filter-group { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+        .filter-group > * { flex: 1; min-width: 120px; }
+        .kpi-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 15px; }
+        .kpi-box { background: #fff; padding: 10px; text-align: center; border-radius: 8px; border: 1px solid #eee; }
+        .kpi-num { font-size: 18px; font-weight: bold; color: #0056b3; display: block; }
+        .kpi-label { font-size: 11px; color: #666; }
+        .chart-container { background: white; padding: 10px; border-radius: 8px; margin-bottom: 15px; height: 250px; }
+    </style>
+</head>
+<body>
+
+    <div id="screen-login" class="card" style="max-width: 400px; margin: 40px auto;">
+        <h2 style="text-align:center; color:#0056b3">TPM Đăng Nhập</h2>
+        <input type="text" id="log-user" placeholder="Tên đăng nhập">
+        <input type="password" id="log-pass" placeholder="Mật khẩu">
+        <button onclick="handleLogin()">Đăng Nhập</button>
+        <button class="secondary" onclick="showDashboard(false)">Xem Dashboard (Khách)</button>
+        <p id="log-msg" style="color:red; text-align:center"></p>
+    </div>
+
+    <div id="screen-leader" class="hidden">
+        <div class="header"><div>Hi, <b class="u-name"></b></div> <div class="role-badge">TỔ TRƯỞNG</div></div>
+        <div class="tabs">
+            <div class="tab active" onclick="switchLeaderTab(1)">1. Báo Hư</div>
+            <div class="tab" onclick="switchLeaderTab(2)">2. Gán Thợ</div>
+            <div class="tab" onclick="switchLeaderTab(3)">3. Nghiệm Thu</div>
+            <div class="tab" onclick="switchLeaderTab(4)">4. Lịch Sử</div>
+        </div>
+        <div id="l-tab-1" class="card">
+            <select id="l-chuyen">
+                <option value="">-- Chọn Chuyền --</option>
+                <option value="Hoàn chỉnh 1">Hoàn chỉnh 1</option><option value="Hoàn chỉnh 2">Hoàn chỉnh 2</option>
+                <option value="May 1">May 1</option><option value="May 2">May 2</option><option value="May 3">May 3</option><option value="May 4">May 4</option><option value="May 5">May 5</option><option value="May 6">May 6</option>
+                <option value="Dập 1">Dập 1</option><option value="Dập 2">Dập 2</option>
+                <option value="In lụa">In lụa</option><option value="Bế hình">Bế hình</option>
+                <option value="Cán dán">Cán dán</option><option value="Cắt trục">Cắt trục</option><option value="Ép dấu chân">Ép dấu chân</option>
+                <option value="Chuẩn bị đế">Chuẩn bị đế</option><option value="Bọc đế">Bọc đế</option><option value="Bán thành phẩm">Bán thành phẩm</option><option value="Cắt nhiệt">Cắt nhiệt</option><option value="Phát sinh">Phát sinh</option>
+            </select>
+            <input type="text" id="l-msts" placeholder="Mã số tài sản (MSTS)">
+            <label style="font-size:12px">Thời điểm hư:</label><input type="datetime-local" id="l-time">
+            <button onclick="leaderCreate()">Gửi Báo Cáo</button>
+        </div>
+        <div id="l-tab-2" class="hidden"><div class="card"><h3>Chờ Gán Bảo Trì</h3><div id="l-list-open"></div><button class="secondary" onclick="loadLeaderOpen()">Làm mới</button></div></div>
+        <div id="l-tab-3" class="hidden"><div class="card"><h3>Cần Xử Lý (Nghiệm thu/Thay máy)</h3><div id="l-list-actionable"></div><button class="secondary" onclick="loadLeaderActionable()">Làm mới</button></div></div>
+        <div id="l-tab-4" class="hidden"><div class="card"><h3>Lịch Sử (50 gần nhất)</h3><div id="l-history-list"></div><button class="secondary" onclick="loadHistory('l-history-list')">Làm mới</button></div></div>
+        <button style="background:#17a2b8" onclick="showDashboard(true)">Xem Dashboard Chi Tiết</button>
+        <button class="logout" onclick="doLogout()">Đăng Xuất</button>
+    </div>
+
+    <div id="screen-tech" class="hidden">
+        <div class="header"><div>Hi, <b class="u-name"></b></div> <div class="role-badge">BẢO TRÌ</div></div>
+        <div id="tech-alert-area" class="hidden"><div class="alert-box"><strong>🔔 CÓ MÁY HƯ MỚI!</strong><div id="tech-alert-list"></div></div></div>
+        <div class="card"><h3>Việc Của Tôi (<span id="count-myjob">0</span>)</h3><div id="t-list"></div><button class="secondary" onclick="loadTechJobs()">Làm mới</button></div>
+        <div class="card"><h3>Tiện Ích</h3><button class="secondary" onclick="openHistoryModal()">Lịch Sử Đã Làm</button><button style="background:#17a2b8; margin-top:5px" onclick="showDashboard(true)">Xem Dashboard</button></div>
+        <button class="logout" onclick="doLogout()">Đăng Xuất</button>
+    </div>
+
+    <div id="modal-detail" class="card hidden" style="position:fixed; top:5%; left:5%; right:5%; z-index:200; max-height:90%; overflow-y:auto; border:2px solid #0056b3; box-shadow:0 10px 25px rgba(0,0,0,0.5);"><div class="header" style="border-bottom:1px solid #eee; padding-bottom:10px;"><h3 style="margin:0; color:#0056b3">Chi Tiết Phiếu</h3><button class="secondary" style="width:auto; padding:5px 10px" onclick="document.getElementById('modal-detail').classList.add('hidden')">X</button></div><div id="detail-content"></div><button onclick="document.getElementById('modal-detail').classList.add('hidden')" style="margin-top:15px;">Đóng</button></div>
+    <div id="modal-history" class="card hidden" style="position:fixed; top:20px; left:10px; right:10px; bottom:20px; z-index:100; overflow-y:auto;"><div class="header"><h3>Lịch Sử</h3><button class="secondary" style="width:auto; padding:5px 10px" onclick="document.getElementById('modal-history').classList.add('hidden')">Đóng</button></div><div id="common-history-list">Đang tải...</div></div>
+    
+    <div id="modal-assign" class="card hidden" style="position:fixed; top:20px; left:20px; right:20px; z-index:99; border:2px solid #0056b3"><h3>Xác nhận Bảo Trì Đến</h3><input type="hidden" id="a-id"><input type="hidden" id="a-row"><p>Máy: <b id="a-msts"></b></p><label>Nhân Viên:</label><select id="a-tech"><option value="">-- Chọn Tên --</option><option value="Hoàng Đức Thuần">Hoàng Đức Thuần</option><option value="Bùi Thanh Hoàng">Bùi Thanh Hoàng</option><option value="Nguyễn Tuấn Khanh">Nguyễn Tuấn Khanh</option><option value="Nguyễn Văn Khanh">Nguyễn Văn Khanh</option><option value="Nguyễn Nhất Đẳng">Nguyễn Nhất Đẳng</option><option value="Phan Văn Hồ">Phan Văn Hồ</option><option value="Phạm Đắc Thụy">Phạm Đắc Thụy</option></select><label>Thời gian đến:</label><input type="datetime-local" id="a-time"><button onclick="leaderAssignSubmit()">Xác Nhận</button><button class="secondary" onclick="document.getElementById('modal-assign').classList.add('hidden')">Hủy</button></div>
+    
+    <div id="modal-finish" class="card hidden" style="position:fixed; top:20px; left:20px; right:20px; z-index:99; border:2px solid #28a745"><h3>Báo Cáo Sửa Xong</h3><input type="hidden" id="f-id"><input type="hidden" id="f-row"><p>Máy: <b id="f-msts"></b></p><label>Nhóm lỗi (Nhập tay):</label><input type="text" id="f-nhomloi" placeholder="VD: Cơ khí..."><label>Biện pháp:</label><textarea id="f-bienphap" rows="2"></textarea><label>Giờ sửa xong:</label><input type="datetime-local" id="f-time"><button style="background:#28a745" onclick="techFinishSubmit()">Gửi Báo Cáo</button><button class="secondary" onclick="document.getElementById('modal-finish').classList.add('hidden')">Hủy</button></div>
+
+    <div id="modal-action" class="card hidden" style="position:fixed; top:20px; left:20px; right:20px; z-index:99; border:2px solid #17a2b8"><h3>Xử Lý Nghiệm Thu</h3><input type="hidden" id="c-id"><input type="hidden" id="c-row"><input type="hidden" id="c-type"><p>Máy: <b id="c-msts"></b></p><p id="c-status-text"></p><div id="swap-form" class="hidden"><div style="background:#fff3cd; padding:10px; border-radius:6px; margin-bottom:10px;"><label>Mã Máy Thay Thế:</label><input type="text" id="c-new-msts"><label>Giờ Chuyền Chạy Lại:</label><input type="datetime-local" id="c-time-swap"><button style="background:#ffc107; color:black" onclick="leaderSwapSubmit()">Xác Nhận Thay Máy</button></div></div><div id="confirm-form" class="hidden"><label>Giờ Chuyền Chạy Lại:</label><input type="datetime-local" id="c-time-confirm"><p style="font-size:11px;color:#666"><i>(Mặc định lấy giờ sửa xong)</i></p><button style="background:#28a745" onclick="leaderConfirmSubmit()">Nghiệm Thu (Done)</button></div><button class="secondary" onclick="document.getElementById('modal-action').classList.add('hidden')">Hủy</button></div>
+
+    <div id="screen-dashboard" class="hidden"><div class="header"><h3>Dashboard TPM</h3><button class="secondary" style="width:auto; padding:5px 15px;" onclick="goBack()">Quay Lại</button></div><div class="card"><div class="filter-group"><select id="d-vsm"><option value="all">Tất cả VSM</option><option value="VSM 1">VSM 1</option><option value="VSM 2">VSM 2</option></select><select id="d-line"><option value="all">Tất cả Chuyền</option><option value="Hoàn chỉnh 1">Hoàn chỉnh 1</option><option value="Hoàn chỉnh 2">Hoàn chỉnh 2</option><option value="May 1">May 1</option><option value="May 2">May 2</option><option value="May 3">May 3</option><option value="May 4">May 4</option><option value="May 5">May 5</option><option value="May 6">May 6</option><option value="Dập 1">Dập 1</option><option value="Dập 2">Dập 2</option><option value="In lụa">In lụa</option><option value="Bế hình">Bế hình</option><option value="Cán dán">Cán dán</option><option value="Cắt trục">Cắt trục</option><option value="Ép dấu chân">Ép dấu chân</option><option value="Chuẩn bị đế">Chuẩn bị đế</option><option value="Bọc đế">Bọc đế</option><option value="Bán thành phẩm">Bán thành phẩm</option><option value="Cắt nhiệt">Cắt nhiệt</option><option value="Phát sinh">Phát sinh</option></select></div><div class="filter-group"><input type="date" id="d-start" title="Từ ngày"><input type="date" id="d-end" title="Đến ngày"></div><div class="filter-group"><button onclick="loadDashboardData()">Lọc Dữ Liệu</button><button class="secondary" onclick="resetFilters()">Reset (Xem Tất Cả)</button></div></div><div class="kpi-grid"><div class="kpi-box"><span class="kpi-num" id="kpi-total">0</span><span class="kpi-label">Tổng Phiếu</span></div><div class="kpi-box"><span class="kpi-num" id="kpi-dt">0</span><span class="kpi-label">Downtime (h)</span></div><div class="kpi-box"><span class="kpi-num" id="kpi-mttr">0</span><span class="kpi-label">MTTR (phút)</span></div></div><div class="chart-container"><canvas id="c-line-ticket"></canvas></div><div class="chart-container"><canvas id="c-line-dt"></canvas></div><div class="chart-container"><canvas id="c-tech-ticket"></canvas></div><div class="chart-container"><canvas id="c-tech-mttr"></canvas></div></div>
+
+    <script>
+        // ==============================================
+        const API_URL = 'https://script.google.com/macros/s/AKfycbxcAcOlhUuqTF1dIwOMZdT5cTEFkohbD_b45cj12rNRD2jX8TJIvNHXSBlsgstQv7Eq/exec'; // DÁN URL VÀO ĐÂY
+        // ==============================================
+
+        let currentUser = null, refreshInterval = null, lastAlertCount = 0, lastMyJobCount = 0;
+        const beepSound = new Audio("data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU");
+        const vsmMap = {"Hoàn chỉnh 1": "VSM 1", "Hoàn chỉnh 2": "VSM 2", "May 1": "VSM 1", "May 2": "VSM 1", "May 3": "VSM 1", "May 4": "VSM 1", "May 5": "VSM 2", "May 6": "VSM 2", "Dập 1": "VSM 1", "Dập 2": "VSM 2", "In lụa": "VSM 1", "Bế hình": "VSM 1", "Cán dán": "VSM 1", "Cắt trục": "VSM 1", "Ép dấu chân": "VSM 2", "Chuẩn bị đế": "VSM 2", "Bọc đế": "VSM 2", "Bán thành phẩm": "VSM 2", "Cắt nhiệt": "VSM 1", "Phát sinh": "Phát sinh"};
+
+        document.addEventListener('DOMContentLoaded', () => { checkAutoLogin(); });
+        function post(data, cb) { if(API_URL.includes('YOUR_')) { alert("Chưa dán API URL!"); return; } fetch(API_URL, {method:'POST', body:JSON.stringify(data)}).then(r=>r.json()).then(cb).catch(e=>console.log(e)); }
+        function setNow(id) { const now = new Date(); now.setMinutes(now.getMinutes() - now.getTimezoneOffset()); document.getElementById(id).value = now.toISOString().slice(0,16); }
+        function notifyUser() { try { beepSound.play().catch(e=>{}); if(navigator.vibrate) navigator.vibrate([500, 300, 500]); } catch(e){} }
+        function showScreen(id) { document.querySelectorAll('body > div[id^="screen-"]').forEach(d => d.classList.add('hidden')); document.getElementById(id).classList.remove('hidden'); }
+        function goBack() { if (!currentUser) showScreen('screen-login'); else if (currentUser.role === 'leader') showScreen('screen-leader'); else showScreen('screen-tech'); }
+        function checkAutoLogin() { const s = localStorage.getItem('tpm_user'); if (s) { currentUser = JSON.parse(s); restoreSession(); } }
+        function restoreSession() {
+            document.querySelectorAll('.u-name').forEach(el => el.innerText = currentUser.fullname);
+            document.getElementById('screen-login').classList.add('hidden');
+            if (currentUser.role === 'leader') { showScreen('screen-leader'); setNow('l-time'); loadLeaderOpen(); }
+            else { showScreen('screen-tech'); loadTechJobs(); startAutoRefresh(); }
+        }
+        function handleLogin() {
+            const u = document.getElementById('log-user').value, p = document.getElementById('log-pass').value;
+            document.querySelector('#screen-login button').innerText = "Đang tải...";
+            post({action:'login', username:u, password:p}, res => {
+                document.querySelector('#screen-login button').innerText = "Đăng Nhập";
+                currentUser = res; localStorage.setItem('tpm_user', JSON.stringify(currentUser)); restoreSession();
+            });
+        }
+        function doLogout() { if(refreshInterval) clearInterval(refreshInterval); localStorage.removeItem('tpm_user'); location.reload(); }
+
+        // LEADER
+        function switchLeaderTab(n) {
+            for(let i=1; i<=4; i++) document.getElementById('l-tab-'+i).classList.add('hidden');
+            document.getElementById('l-tab-'+n).classList.remove('hidden');
+            document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', i===n-1));
+            if(n===1) setNow('l-time'); if(n===2) loadLeaderOpen(); if(n===3) loadLeaderActionable(); if(n===4) loadHistory('l-history-list');
+        }
+        function leaderCreate() {
+            const d = { chuyen:document.getElementById('l-chuyen').value, ma_so:document.getElementById('l-msts').value, gio_hu:document.getElementById('l-time').value, nguoi_tao:currentUser.fullname };
+            if(!d.ma_so) return alert("Thiếu thông tin");
+            post({action:'leader_create', data:d}, res => { 
+                alert(res.message); document.getElementById('l-msts').value=''; 
+                switchLeaderTab(2); // TỰ ĐỘNG CHUYỂN TAB 2
+            });
+        }
+        function loadLeaderOpen() {
+            const div = document.getElementById('l-list-open'); div.innerHTML = 'Đang tải...';
+            post({action:'leader_get_open'}, res => {
+                div.innerHTML = ''; 
+                if(res.data.length === 0) div.innerHTML = 'Không có phiếu chờ.';
+                res.data.forEach(i => div.innerHTML += `<div class="ticket-item open"><h4>${i.chuyen} - ${i.ma_so}</h4><p>Hư lúc: ${new Date(i.gio_hu).toLocaleString()}</p><button onclick='openAssign(${JSON.stringify(i)})'>Bảo Trì Đến</button></div>`);
+            });
+        }
+        function openAssign(i) { document.getElementById('a-id').value=i.id; document.getElementById('a-row').value=i.rowIndex; document.getElementById('a-msts').innerText=i.ma_so; setNow('a-time'); document.getElementById('modal-assign').classList.remove('hidden'); }
+        function leaderAssignSubmit() {
+            const t = document.getElementById('a-tech').value, time = document.getElementById('a-time').value;
+            if(!t || !time) return alert("Vui lòng chọn Bảo trì và Giờ đến!");
+            post({action:'leader_assign', id:document.getElementById('a-id').value, rowIndex:document.getElementById('a-row').value, data:{ten_bao_tri:t, gio_den:time}}, res => {
+                alert(res.message); document.getElementById('modal-assign').classList.add('hidden'); loadLeaderOpen();
+            });
+        }
+        // NEW: NGHIỆM THU / THAY MÁY
+        function loadLeaderActionable() {
+            const div = document.getElementById('l-list-actionable'); div.innerHTML = 'Đang tải...';
+            post({action:'leader_get_actionable'}, res => {
+                div.innerHTML = ''; 
+                if(res.data.length === 0) div.innerHTML = 'Không có phiếu cần xử lý.';
+                res.data.forEach(i => {
+                    if(i.type === 'fixed') {
+                        div.innerHTML += `<div class="ticket-item fixed"><h4>${i.chuyen} - ${i.ma_so}</h4><p>Đã sửa xong: ${new Date(i.gio_xong).toLocaleString()}</p><button style="background:#28a745" onclick='openActionModal(${JSON.stringify(i)})'>Nghiệm Thu</button></div>`;
+                    } else {
+                        div.innerHTML += `<div class="ticket-item assigned"><h4>${i.chuyen} - ${i.ma_so}</h4><p>Đang sửa bởi: ${i.ten_bao_tri}</p><button style="background:#ffc107; color:black" onclick='openActionModal(${JSON.stringify(i)})'>Thay Máy Khác</button></div>`;
+                    }
+                });
+            });
+        }
+        function openActionModal(i) {
+            document.getElementById('c-id').value = i.id; document.getElementById('c-row').value = i.rowIndex;
+            document.getElementById('c-type').value = i.type;
+            document.getElementById('c-msts').innerText = i.ma_so; 
+            const statusTxt = i.type==='fixed' ? `Bảo trì xong: ${new Date(i.gio_xong).toLocaleTimeString()}` : `Đang sửa bởi: ${i.ten_bao_tri}`;
+            document.getElementById('c-status-text').innerText = statusTxt;
+            
+            if(i.type === 'swap') {
+                document.getElementById('swap-form').classList.remove('hidden');
+                document.getElementById('confirm-form').classList.add('hidden');
+                setNow('c-time-swap');
+            } else {
+                document.getElementById('swap-form').classList.add('hidden');
+                document.getElementById('confirm-form').classList.remove('hidden');
+                const td = new Date(i.gio_xong); td.setMinutes(td.getMinutes() - td.getTimezoneOffset());
+                document.getElementById('c-time-confirm').value = td.toISOString().slice(0,16);
+            }
+            document.getElementById('modal-action').classList.remove('hidden');
+        }
+        function leaderSwapSubmit() {
+            const newM = document.getElementById('c-new-msts').value, time = document.getElementById('c-time-swap').value;
+            if(!newM) return alert("Nhập MSTS máy mới!");
+            post({action:'leader_update_swap', id:document.getElementById('c-id').value, rowIndex:document.getElementById('c-row').value, data:{gio_chay_lai:time, ma_so_thay_the:newM}}, res => {
+                alert(res.message); document.getElementById('modal-action').classList.add('hidden'); loadLeaderActionable();
+            });
+        }
+        function leaderConfirmSubmit() {
+            const time = document.getElementById('c-time-confirm').value;
+            post({action:'leader_confirm_done', id:document.getElementById('c-id').value, rowIndex:document.getElementById('c-row').value, data:{gio_chay_lai: time}}, res => {
+                alert(res.message); document.getElementById('modal-action').classList.add('hidden'); loadLeaderActionable();
+            });
+        }
+
+        // TECH
+        function startAutoRefresh() { refreshInterval = setInterval(() => { if(!document.getElementById('screen-tech').classList.contains('hidden')) loadTechJobs(true); }, 15000); }
+        function loadTechJobs(silent) {
+            const divMy = document.getElementById('t-list'); if(!silent) divMy.innerHTML = 'Đang tải...';
+            post({action:'tech_get_jobs', fullname: currentUser.fullname}, res => {
+                const divAlert = document.getElementById('tech-alert-list'); divAlert.innerHTML = '';
+                const curAlert = res.data.alertJobs.length;
+                if(curAlert > 0) { 
+                    document.getElementById('tech-alert-area').classList.remove('hidden'); 
+                    res.data.alertJobs.forEach(i => divAlert.innerHTML += `<div style="border-bottom:1px dashed #ccc; padding:5px;"><b>${i.chuyen}</b>: ${i.ma_so}</div>`); 
+                    if(silent && curAlert > lastAlertCount) notifyUser();
+                } else document.getElementById('tech-alert-area').classList.add('hidden');
+                lastAlertCount = curAlert;
+                divMy.innerHTML = ''; document.getElementById('count-myjob').innerText = res.data.myJobs.length;
+                if(res.data.myJobs.length === 0 && !silent) divMy.innerHTML = 'Chưa có việc.';
+                else res.data.myJobs.forEach(i => {
+                    let statusText = "Chờ sửa"; if(i.is_swapped) statusText = "<b style='color:red'>Đã thay máy - Sửa máy cũ này!</b>";
+                    divMy.innerHTML += `<div class="ticket-item assigned"><h4>${i.chuyen} - ${i.ma_so}</h4><p>${statusText}</p><button style="background:#28a745" onclick='openFinish(${JSON.stringify(i)})'>Sửa Xong</button></div>`;
+                });
+            });
+        }
+        function openFinish(i) { document.getElementById('f-id').value=i.id; document.getElementById('f-row').value=i.rowIndex; document.getElementById('f-msts').innerText=i.ma_so; setNow('f-time'); document.getElementById('modal-finish').classList.remove('hidden'); }
+        function techFinishSubmit() {
+            const d = { nhom_loi:document.getElementById('f-nhomloi').value, bien_phap:document.getElementById('f-bienphap').value, gio_xong:document.getElementById('f-time').value };
+            if(!d.gio_xong) return alert("Nhập giờ xong");
+            post({action:'tech_finish', id:document.getElementById('f-id').value, rowIndex:document.getElementById('f-row').value, data:d}, res => { alert(res.message); document.getElementById('modal-finish').classList.add('hidden'); loadTechJobs(); });
+        }
+
+        // HISTORY & DASHBOARD
+        function openHistoryModal() { document.getElementById('modal-history').classList.remove('hidden'); loadHistory('common-history-list'); }
+        function loadHistory(targetId) {
+            const div = document.getElementById(targetId); div.innerHTML = 'Đang tải...';
+            post({action:'get_history', role: currentUser.role, fullname: currentUser.fullname}, res => {
+                div.innerHTML = ''; if(res.data.length === 0) return div.innerHTML = 'Trống.';
+                res.data.forEach(i => {
+                    const tag = i.status==='Done'?'done':(i.status==='Fixed'?'fixed':(i.status==='Assigned'?'assigned':'open'));
+                    div.innerHTML += `<div class="ticket-item ${tag}"><span class="status-tag tag-${tag}">${i.status}</span><h4>${i.chuyen} - ${i.ma_so}</h4><p style="margin-bottom:5px; font-size:12px">Hư: ${formatDate(i.gio_hu)}</p><button style="padding:5px 10px; font-size:12px" onclick='viewDetail(${JSON.stringify(i)})'>Chi Tiết</button></div>`;
+                });
+            });
+        }
+        function viewDetail(i) {
+            const fmt = (d) => d ? new Date(d).toLocaleString() : '---';
+            const swapInfo = i.ma_so_thay_the ? `<div style="color:red; font-weight:bold; margin-top:5px;">Thay máy mới: ${i.ma_so_thay_the}</div>` : '';
+            const html = `<div class="detail-row"><span class="detail-label">Trạng thái:</span><span class="detail-val" style="color:#0056b3">${i.status}</span></div><div class="detail-row"><span class="detail-label">Người tạo:</span><span class="detail-val">${i.nguoi_tao||'---'}</span></div><div class="detail-row"><span class="detail-label">MSTS:</span><span class="detail-val">${i.ma_so}</span></div><div class="detail-row"><span class="detail-label">Chuyền:</span><span class="detail-val">${i.chuyen}</span></div><div class="detail-row"><span class="detail-label">Hư:</span><span class="detail-val">${fmt(i.gio_hu)}</span></div><div class="detail-row"><span class="detail-label">Đến:</span><span class="detail-val">${fmt(i.gio_den)}</span></div><div class="detail-row"><span class="detail-label">Thợ:</span><span class="detail-val">${i.ten_bao_tri||'---'}</span></div><div class="detail-row"><span class="detail-label">Sửa Xong:</span><span class="detail-val">${fmt(i.gio_xong)}</span></div><div class="detail-row"><span class="detail-label">Chạy lại:</span><span class="detail-val">${fmt(i.gio_chay_lai)}</span></div><div class="detail-row" style="flex-direction:column"><span class="detail-label">Lỗi:</span><div style="background:#f9f9f9; padding:5px;">${i.nhom_loi||'---'}</div></div><div class="detail-row" style="flex-direction:column; border:none"><span class="detail-label">Biện pháp:</span><div style="background:#f9f9f9; padding:5px;">${i.bien_phap||'---'}</div>${swapInfo}</div>`;
+            document.getElementById('detail-content').innerHTML = html; document.getElementById('modal-detail').classList.remove('hidden');
+        }
+        function formatDate(s) { return s ? new Date(s).toLocaleString('vi-VN', {hour:'2-digit', minute:'2-digit', day:'2-digit', month:'2-digit'}) : ''; }
+
+        let charts = {};
+        function resetFilters() { document.getElementById('d-vsm').value='all'; document.getElementById('d-line').value='all'; document.getElementById('d-start').value=''; document.getElementById('d-end').value=''; loadDashboardData(); }
+        function showDashboard(isLoggedIn) { showScreen('screen-dashboard'); if(!document.getElementById('d-start').value) resetFilters(); else loadDashboardData(); }
+        function loadDashboardData() {
+            post({action:'get_dashboard'}, res => {
+                const raw = res.data, vsmV = document.getElementById('d-vsm').value, lineV = document.getElementById('d-line').value;
+                const sIn = document.getElementById('d-start').value, eIn = document.getElementById('d-end').value;
+                const filtered = raw.filter(i => {
+                    if (sIn && eIn) { const d=i.gio_hu?new Date(i.gio_hu):new Date(), s=new Date(sIn), e=new Date(eIn); e.setHours(23,59,59); if(d<s||d>e) return false; }
+                    if(vsmV!=='all' && (vsmMap[i.chuyen]||"Khác")!==vsmV) return false;
+                    if(lineV!=='all' && i.chuyen!==lineV) return false;
+                    return true;
+                });
+                let tot=0, mttrS=0, mttrC=0, lS={}, tS={};
+                filtered.forEach(i=>{
+                    const l=i.chuyen||"Khác", t=i.ten_bao_tri||"Chưa gán";
+                    if(!lS[l])lS[l]={tk:0,dt:0}; if(!tS[t])tS[t]={tk:0,dt:0};
+                    lS[l].tk++; if(i.ten_bao_tri) tS[t].tk++;
+                    // Downtime Chuyền: Giờ chạy lại (I) - Giờ hư (F)
+                    if(i.gio_hu && i.gio_chay_lai){ const dt=(new Date(i.gio_chay_lai)-new Date(i.gio_hu))/36e5; if(dt>0){ tot+=dt; lS[l].dt+=dt; } }
+                    // MTTR Máy: Giờ sửa xong (L) - Giờ hư (F)
+                    if(i.gio_hu && i.gio_xong){ const rep=(new Date(i.gio_xong)-new Date(i.gio_hu))/60000; if(rep>0 && i.ten_bao_tri){ tS[t].dt+=rep; mttrS+=rep; mttrC++; } }
+                });
+                document.getElementById('kpi-total').innerText=filtered.length; document.getElementById('kpi-dt').innerText=tot.toFixed(1); document.getElementById('kpi-mttr').innerText=mttrC?(mttrS/mttrC).toFixed(0):0;
+                drawC('c-line-ticket','Số phiếu',lS,'tk','#36a2eb'); drawC('c-line-dt','Downtime Chuyền (h)',lS,'dt','#ff6384'); drawC('c-tech-ticket','Phiếu',tS,'tk','#4bc0c0');
+                const tL=Object.keys(tS), tM=tL.map(k=>tS[k].tk?((tS[k].dt)/tS[k].tk).toFixed(0):0); drawCS('c-tech-mttr','MTTR Bảo Trì (p)',tL,tM,'#ff9f40');
+            });
+        }
+        function drawC(id,l,o,k,c){drawCS(id,l,Object.keys(o),Object.keys(o).map(x=>o[x][k]),c);}
+        function drawCS(id,l,lb,v,c){const x=document.getElementById(id).getContext('2d'); if(charts[id])charts[id].destroy(); charts[id]=new Chart(x,{type:'bar',data:{labels:lb,datasets:[{label:l,data:v,backgroundColor:c}]},options:{responsive:true,maintainAspectRatio:false}});}
+    </script>
+</body>
+</html>
