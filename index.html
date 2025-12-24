@@ -36,6 +36,14 @@
         .kpi-num { font-size: 18px; font-weight: bold; color: #0056b3; display: block; }
         .kpi-label { font-size: 11px; color: #666; }
         .chart-container { background: white; padding: 10px; border-radius: 8px; margin-bottom: 15px; height: 250px; }
+
+        /* Toast Notification */
+        .toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
+        .toast { background: #333; color: white; padding: 12px 20px; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); font-size: 14px; animation: slideIn 0.3s ease-out forwards; max-width: 300px; display: flex; align-items: center; justify-content: space-between; pointer-events: auto; }
+        .toast.success { background: #28a745; border-left: 4px solid #155724; }
+        .toast.error { background: #dc3545; border-left: 4px solid #721c24; }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @keyframes fadeOut { to { opacity: 0; transform: translateY(-20px); } }
     </style>
 </head>
 <body>
@@ -107,7 +115,16 @@
         const vsmMap = {"Hoàn chỉnh 1": "VSM 1", "Hoàn chỉnh 2": "VSM 2", "May 1": "VSM 1", "May 2": "VSM 1", "May 3": "VSM 1", "May 4": "VSM 1", "May 5": "VSM 2", "May 6": "VSM 2", "Dập 1": "VSM 1", "Dập 2": "VSM 2", "In lụa": "VSM 1", "Bế hình": "VSM 1", "Cán dán": "VSM 1", "Cắt trục": "VSM 1", "Ép dấu chân": "VSM 2", "Chuẩn bị đế": "VSM 2", "Bọc đế": "VSM 2", "Bán thành phẩm": "VSM 2", "Cắt nhiệt": "VSM 1", "Phát sinh": "Phát sinh"};
 
         document.addEventListener('DOMContentLoaded', () => { checkAutoLogin(); });
-        function post(data, cb) { if(API_URL.includes('YOUR_')) { alert("Chưa dán API URL!"); return; } fetch(API_URL, {method:'POST', body:JSON.stringify(data)}).then(r=>r.json()).then(cb).catch(e=>console.log(e)); }
+        
+        function showToast(msg, type='info') {
+            let c = document.getElementById('toast-container');
+            if (!c) { c = document.createElement('div'); c.id='toast-container'; c.className='toast-container'; document.body.appendChild(c); }
+            const t = document.createElement('div'); t.className = `toast ${type}`; t.innerText = msg;
+            c.appendChild(t);
+            setTimeout(() => { t.style.animation = 'fadeOut 0.5s forwards'; setTimeout(() => t.remove(), 500); }, 3000);
+        }
+
+        function post(data, cb) { if(API_URL.includes('YOUR_')) { showToast("Chưa dán API URL!", "error"); return; } fetch(API_URL, {method:'POST', body:JSON.stringify(data)}).then(r=>r.json()).then(cb).catch(e=>console.log(e)); }
         function setNow(id) { const now = new Date(); now.setMinutes(now.getMinutes() - now.getTimezoneOffset()); document.getElementById(id).value = now.toISOString().slice(0,16); }
         function notifyUser() { try { beepSound.play().catch(e=>{}); if(navigator.vibrate) navigator.vibrate([500, 300, 500]); } catch(e){} }
         function showScreen(id) { document.querySelectorAll('body > div[id^="screen-"]').forEach(d => d.classList.add('hidden')); document.getElementById(id).classList.remove('hidden'); }
@@ -138,9 +155,9 @@
         }
         function leaderCreate() {
             const d = { chuyen:document.getElementById('l-chuyen').value, ma_so:document.getElementById('l-msts').value, gio_hu:document.getElementById('l-time').value, nguoi_tao:currentUser.fullname };
-            if(!d.ma_so) return alert("Thiếu thông tin");
+            if(!d.ma_so) return showToast("Thiếu thông tin", "error");
             post({action:'leader_create', data:d}, res => { 
-                alert(res.message); document.getElementById('l-msts').value=''; 
+                showToast(res.message, "success"); document.getElementById('l-msts').value=''; 
                 switchLeaderTab(2); // TỰ ĐỘNG CHUYỂN TAB 2
             });
         }
@@ -155,9 +172,9 @@
         function openAssign(i) { document.getElementById('a-id').value=i.id; document.getElementById('a-row').value=i.rowIndex; document.getElementById('a-msts').innerText=i.ma_so; setNow('a-time'); document.getElementById('modal-assign').classList.remove('hidden'); }
         function leaderAssignSubmit() {
             const t = document.getElementById('a-tech').value, time = document.getElementById('a-time').value;
-            if(!t || !time) return alert("Vui lòng chọn Bảo trì và Giờ đến!");
+            if(!t || !time) return showToast("Vui lòng chọn Bảo trì và Giờ đến!", "error");
             post({action:'leader_assign', id:document.getElementById('a-id').value, rowIndex:document.getElementById('a-row').value, data:{ten_bao_tri:t, gio_den:time}}, res => {
-                alert(res.message); document.getElementById('modal-assign').classList.add('hidden'); loadLeaderOpen();
+                showToast(res.message, "success"); document.getElementById('modal-assign').classList.add('hidden'); loadLeaderOpen();
             });
         }
         // NEW: NGHIỆM THU / THAY MÁY
@@ -196,15 +213,15 @@
         }
         function leaderSwapSubmit() {
             const newM = document.getElementById('c-new-msts').value, time = document.getElementById('c-time-swap').value;
-            if(!newM) return alert("Nhập MSTS máy mới!");
+            if(!newM) return showToast("Nhập MSTS máy mới!", "error");
             post({action:'leader_update_swap', id:document.getElementById('c-id').value, rowIndex:document.getElementById('c-row').value, data:{gio_chay_lai:time, ma_so_thay_the:newM}}, res => {
-                alert(res.message); document.getElementById('modal-action').classList.add('hidden'); loadLeaderActionable();
+                showToast(res.message, "success"); document.getElementById('modal-action').classList.add('hidden'); loadLeaderActionable();
             });
         }
         function leaderConfirmSubmit() {
             const time = document.getElementById('c-time-confirm').value;
             post({action:'leader_confirm_done', id:document.getElementById('c-id').value, rowIndex:document.getElementById('c-row').value, data:{gio_chay_lai: time}}, res => {
-                alert(res.message); document.getElementById('modal-action').classList.add('hidden'); loadLeaderActionable();
+                showToast(res.message, "success"); document.getElementById('modal-action').classList.add('hidden'); loadLeaderActionable();
             });
         }
 
@@ -232,8 +249,8 @@
         function openFinish(i) { document.getElementById('f-id').value=i.id; document.getElementById('f-row').value=i.rowIndex; document.getElementById('f-msts').innerText=i.ma_so; setNow('f-time'); document.getElementById('modal-finish').classList.remove('hidden'); }
         function techFinishSubmit() {
             const d = { nhom_loi:document.getElementById('f-nhomloi').value, bien_phap:document.getElementById('f-bienphap').value, gio_xong:document.getElementById('f-time').value };
-            if(!d.gio_xong) return alert("Nhập giờ xong");
-            post({action:'tech_finish', id:document.getElementById('f-id').value, rowIndex:document.getElementById('f-row').value, data:d}, res => { alert(res.message); document.getElementById('modal-finish').classList.add('hidden'); loadTechJobs(); });
+            if(!d.gio_xong) return showToast("Nhập giờ xong", "error");
+            post({action:'tech_finish', id:document.getElementById('f-id').value, rowIndex:document.getElementById('f-row').value, data:d}, res => { showToast(res.message, "success"); document.getElementById('modal-finish').classList.add('hidden'); loadTechJobs(); });
         }
 
         // HISTORY & DASHBOARD
@@ -288,4 +305,5 @@
         function drawCS(id,l,lb,v,c){const x=document.getElementById(id).getContext('2d'); if(charts[id])charts[id].destroy(); charts[id]=new Chart(x,{type:'bar',data:{labels:lb,datasets:[{label:l,data:v,backgroundColor:c}]},options:{responsive:true,maintainAspectRatio:false}});}
     </script>
 </body>
+
 </html>
