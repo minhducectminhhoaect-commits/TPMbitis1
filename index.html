@@ -115,6 +115,8 @@
         // ==============================================
 
         let currentUser = null, refreshInterval = null, lastAlertCount = 0, lastMyJobCount = 0;
+        const ticketCache = {};
+        function cacheTicket(t) { ticketCache[t.id] = t; return t.id; }
         const beepSound = new Audio("data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU");
         const vsmMap = {"Hoàn chỉnh 1": "VSM 1", "Hoàn chỉnh 2": "VSM 2", "May 1": "VSM 1", "May 2": "VSM 1", "May 3": "VSM 1", "May 4": "VSM 1", "May 5": "VSM 2", "May 6": "VSM 2", "Dập 1": "VSM 1", "Dập 2": "VSM 2", "In lụa": "VSM 1", "Bế hình": "VSM 1", "Cán dán": "VSM 1", "Cắt trục": "VSM 1", "Ép dấu chân": "VSM 2", "Chuẩn bị đế": "VSM 2", "Bọc đế": "VSM 2", "Bán thành phẩm": "VSM 2", "Cắt nhiệt": "VSM 1", "Phát sinh": "Phát sinh"};
 
@@ -176,12 +178,12 @@
                     div.innerHTML = 'Không có phiếu chờ.';
                 } else {
                     let html = '';
-                    res.data.forEach(i => html += `<div class="ticket-item open"><h4>${i.chuyen} - ${i.ma_so}</h4><p>Hư lúc: ${new Date(i.gio_hu).toLocaleString()}</p><button onclick='openAssign(${JSON.stringify(i)})'>Bảo Trì Đến</button></div>`);
+                    res.data.forEach(i => html += `<div class="ticket-item open"><h4>${i.chuyen} - ${i.ma_so}</h4><p>Hư lúc: ${new Date(i.gio_hu).toLocaleString()}</p><button onclick='openAssign("${cacheTicket(i)}")'>Bảo Trì Đến</button></div>`);
                     div.innerHTML = html;
                 }
             });
         }
-        function openAssign(i) { document.getElementById('a-id').value=i.id; document.getElementById('a-row').value=i.rowIndex; document.getElementById('a-msts').innerText=i.ma_so; setNow('a-time'); document.getElementById('modal-assign').classList.remove('hidden'); }
+        function openAssign(id) { const i=ticketCache[id]; document.getElementById('a-id').value=i.id; document.getElementById('a-row').value=i.rowIndex; document.getElementById('a-msts').innerText=i.ma_so; setNow('a-time'); document.getElementById('modal-assign').classList.remove('hidden'); }
         function leaderAssignSubmit() {
             const t = document.getElementById('a-tech').value, time = document.getElementById('a-time').value;
             if(!t || !time) return showToast("Vui lòng chọn Bảo trì và Giờ đến!", "error");
@@ -199,16 +201,17 @@
                     let html = '';
                     res.data.forEach(i => {
                         if(i.type === 'fixed') {
-                            html += `<div class="ticket-item fixed"><h4>${i.chuyen} - ${i.ma_so}</h4><p>Đã sửa xong: ${new Date(i.gio_xong).toLocaleString()}</p><button style="background:#28a745" onclick='openActionModal(${JSON.stringify(i)})'>Nghiệm Thu</button></div>`;
+                            html += `<div class="ticket-item fixed"><h4>${i.chuyen} - ${i.ma_so}</h4><p>Đã sửa xong: ${new Date(i.gio_xong).toLocaleString()}</p><button style="background:#28a745" onclick='openActionModal("${cacheTicket(i)}")'>Nghiệm Thu</button></div>`;
                         } else {
-                            html += `<div class="ticket-item assigned"><h4>${i.chuyen} - ${i.ma_so}</h4><p>Đang sửa bởi: ${i.ten_bao_tri}</p><button style="background:#ffc107; color:black" onclick='openActionModal(${JSON.stringify(i)})'>Thay Máy Khác</button></div>`;
+                            html += `<div class="ticket-item assigned"><h4>${i.chuyen} - ${i.ma_so}</h4><p>Đang sửa bởi: ${i.ten_bao_tri}</p><button style="background:#ffc107; color:black" onclick='openActionModal("${cacheTicket(i)}")'>Thay Máy Khác</button></div>`;
                         }
                     });
                     div.innerHTML = html;
                 }
             });
         }
-        function openActionModal(i) {
+        function openActionModal(id) {
+            const i=ticketCache[id];
             document.getElementById('c-id').value = i.id; document.getElementById('c-row').value = i.rowIndex;
             document.getElementById('c-type').value = i.type;
             document.getElementById('c-msts').innerText = i.ma_so; 
@@ -242,10 +245,15 @@
         }
 
         // TECH
+        let lastTechDataStr = '';
         function startAutoRefresh() { refreshInterval = setInterval(() => { if(!document.getElementById('screen-tech').classList.contains('hidden')) loadTechJobs(true); }, 15000); }
         function loadTechJobs(silent) {
             const divMy = document.getElementById('t-list'); if(!silent) divMy.innerHTML = 'Đang tải...';
             post({action:'tech_get_jobs', fullname: currentUser.fullname}, res => {
+                const currentDataStr = JSON.stringify(res.data);
+                if (silent && currentDataStr === lastTechDataStr) return;
+                lastTechDataStr = currentDataStr;
+
                 const divAlert = document.getElementById('tech-alert-list');
                 const curAlert = res.data.alertJobs.length;
                 if(curAlert > 0) { 
@@ -267,18 +275,15 @@
                     let myJobsHtml = '';
                     res.data.myJobs.forEach(i => {
                         let statusText = "Chờ sửa"; if(i.is_swapped) statusText = "<b style='color:red'>Đã thay máy - Sửa máy cũ này!</b>";
-                        myJobsHtml += `<div class="ticket-item assigned"><h4>${i.chuyen} - ${i.ma_so}</h4><p>${statusText}</p><button style="background:#28a745" onclick='openFinish(${JSON.stringify(i)})'>Sửa Xong</button></div>`;
+                        myJobsHtml += `<div class="ticket-item assigned"><h4>${i.chuyen} - ${i.ma_so}</h4><p>${statusText}</p><button style="background:#28a745" onclick='openFinish("${cacheTicket(i)}")'>Sửa Xong</button></div>`;
                     });
                     divMy.innerHTML = myJobsHtml;
                 } else {
-                    // silent is true and no jobs, clear list (technically it was cleared in original logic via divMy.innerHTML = '' before loop)
-                    // Original: divMy.innerHTML = ''; then if 0 && !silent -> text. else -> loop.
-                    // If 0 and silent, it remained empty.
                     divMy.innerHTML = '';
                 }
             });
         }
-        function openFinish(i) { document.getElementById('f-id').value=i.id; document.getElementById('f-row').value=i.rowIndex; document.getElementById('f-msts').innerText=i.ma_so; setNow('f-time'); document.getElementById('modal-finish').classList.remove('hidden'); }
+        function openFinish(id) { const i=ticketCache[id]; document.getElementById('f-id').value=i.id; document.getElementById('f-row').value=i.rowIndex; document.getElementById('f-msts').innerText=i.ma_so; setNow('f-time'); document.getElementById('modal-finish').classList.remove('hidden'); }
         function techFinishSubmit() {
             const d = { nhom_loi:document.getElementById('f-nhomloi').value, bien_phap:document.getElementById('f-bienphap').value, gio_xong:document.getElementById('f-time').value };
             if(!d.gio_xong) return showToast("Nhập giờ xong", "error");
@@ -296,13 +301,14 @@
                     let html = '';
                     res.data.forEach(i => {
                         const tag = i.status==='Done'?'done':(i.status==='Fixed'?'fixed':(i.status==='Assigned'?'assigned':'open'));
-                        html += `<div class="ticket-item ${tag}"><span class="status-tag tag-${tag}">${i.status}</span><h4>${i.chuyen} - ${i.ma_so}</h4><p style="margin-bottom:5px; font-size:12px">Hư: ${formatDate(i.gio_hu)}</p><button style="padding:5px 10px; font-size:12px" onclick='viewDetail(${JSON.stringify(i)})'>Chi Tiết</button></div>`;
+                        html += `<div class="ticket-item ${tag}"><span class="status-tag tag-${tag}">${i.status}</span><h4>${i.chuyen} - ${i.ma_so}</h4><p style="margin-bottom:5px; font-size:12px">Hư: ${formatDate(i.gio_hu)}</p><button style="padding:5px 10px; font-size:12px" onclick='viewDetail("${cacheTicket(i)}")'>Chi Tiết</button></div>`;
                     });
                     div.innerHTML = html;
                 }
             });
         }
-        function viewDetail(i) {
+        function viewDetail(id) {
+            const i=ticketCache[id];
             const fmt = (d) => d ? new Date(d).toLocaleString() : '---';
             const swapInfo = i.ma_so_thay_the ? `<div style="color:red; font-weight:bold; margin-top:5px;">Thay máy mới: ${i.ma_so_thay_the}</div>` : '';
             const html = `<div class="detail-row"><span class="detail-label">Trạng thái:</span><span class="detail-val" style="color:#0056b3">${i.status}</span></div><div class="detail-row"><span class="detail-label">Người tạo:</span><span class="detail-val">${i.nguoi_tao||'---'}</span></div><div class="detail-row"><span class="detail-label">MSTS:</span><span class="detail-val">${i.ma_so}</span></div><div class="detail-row"><span class="detail-label">Chuyền:</span><span class="detail-val">${i.chuyen}</span></div><div class="detail-row"><span class="detail-label">Hư:</span><span class="detail-val">${fmt(i.gio_hu)}</span></div><div class="detail-row"><span class="detail-label">Đến:</span><span class="detail-val">${fmt(i.gio_den)}</span></div><div class="detail-row"><span class="detail-label">Thợ:</span><span class="detail-val">${i.ten_bao_tri||'---'}</span></div><div class="detail-row"><span class="detail-label">Sửa Xong:</span><span class="detail-val">${fmt(i.gio_xong)}</span></div><div class="detail-row"><span class="detail-label">Chạy lại:</span><span class="detail-val">${fmt(i.gio_chay_lai)}</span></div><div class="detail-row" style="flex-direction:column"><span class="detail-label">Lỗi:</span><div style="background:#f9f9f9; padding:5px;">${i.nhom_loi||'---'}</div></div><div class="detail-row" style="flex-direction:column; border:none"><span class="detail-label">Biện pháp:</span><div style="background:#f9f9f9; padding:5px;">${i.bien_phap||'---'}</div>${swapInfo}</div>`;
