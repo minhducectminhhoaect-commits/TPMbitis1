@@ -31,6 +31,7 @@
         .tabs { display: flex; margin-bottom: 15px; background: #e9ecef; border-radius: 8px; padding: 4px; }
         .tab { flex: 1; text-align: center; padding: 10px; border-radius: 6px; font-weight: 600; cursor: pointer; color: #666; font-size: 13px; }
         .tab.active { background: white; color: #0056b3; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .tab:focus-visible { outline: 2px solid #0056b3; outline-offset: -2px; }
         .filter-group { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
         .filter-group > * { flex: 1; min-width: 120px; }
         .kpi-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 15px; }
@@ -63,13 +64,13 @@
 
     <div id="screen-leader" class="hidden">
         <div class="header"><div>Hi, <b class="u-name"></b></div> <div class="role-badge">TỔ TRƯỞNG</div></div>
-        <div class="tabs">
-            <div class="tab active" onclick="switchLeaderTab(1)">1. Báo Hư</div>
-            <div class="tab" onclick="switchLeaderTab(2)">2. Gán Thợ</div>
-            <div class="tab" onclick="switchLeaderTab(3)">3. Nghiệm Thu</div>
-            <div class="tab" onclick="switchLeaderTab(4)">4. Lịch Sử</div>
+        <div class="tabs" role="tablist" aria-label="Điều hướng chính">
+            <div class="tab active" role="tab" tabindex="0" aria-selected="true" aria-controls="l-tab-1" onclick="switchLeaderTab(1)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();switchLeaderTab(1);}">1. Báo Hư</div>
+            <div class="tab" role="tab" tabindex="0" aria-selected="false" aria-controls="l-tab-2" onclick="switchLeaderTab(2)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();switchLeaderTab(2);}">2. Gán Thợ</div>
+            <div class="tab" role="tab" tabindex="0" aria-selected="false" aria-controls="l-tab-3" onclick="switchLeaderTab(3)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();switchLeaderTab(3);}">3. Nghiệm Thu</div>
+            <div class="tab" role="tab" tabindex="0" aria-selected="false" aria-controls="l-tab-4" onclick="switchLeaderTab(4)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();switchLeaderTab(4);}">4. Lịch Sử</div>
         </div>
-        <div id="l-tab-1" class="card">
+        <div id="l-tab-1" class="card" role="tabpanel">
             <select id="l-chuyen">
                 <option value="">-- Chọn Chuyền --</option>
                 <option value="Hoàn chỉnh 1">Hoàn chỉnh 1</option><option value="Hoàn chỉnh 2">Hoàn chỉnh 2</option>
@@ -83,9 +84,9 @@
             <label style="font-size:12px">Thời điểm hư:</label><input type="datetime-local" id="l-time">
             <button onclick="leaderCreate()">Gửi Báo Cáo</button>
         </div>
-        <div id="l-tab-2" class="hidden"><div class="card"><h3>Chờ Gán Bảo Trì</h3><div id="l-list-open"></div><button class="secondary" onclick="loadLeaderOpen()">Làm mới</button></div></div>
-        <div id="l-tab-3" class="hidden"><div class="card"><h3>Cần Xử Lý (Nghiệm thu/Thay máy)</h3><div id="l-list-actionable"></div><button class="secondary" onclick="loadLeaderActionable()">Làm mới</button></div></div>
-        <div id="l-tab-4" class="hidden"><div class="card"><h3>Lịch Sử (50 gần nhất)</h3><div id="l-history-list"></div><button class="secondary" onclick="loadHistory('l-history-list')">Làm mới</button></div></div>
+        <div id="l-tab-2" class="hidden" role="tabpanel"><div class="card"><h3>Chờ Gán Bảo Trì</h3><div id="l-list-open"></div><button class="secondary" onclick="loadLeaderOpen()">Làm mới</button></div></div>
+        <div id="l-tab-3" class="hidden" role="tabpanel"><div class="card"><h3>Cần Xử Lý (Nghiệm thu/Thay máy)</h3><div id="l-list-actionable"></div><button class="secondary" onclick="loadLeaderActionable()">Làm mới</button></div></div>
+        <div id="l-tab-4" class="hidden" role="tabpanel"><div class="card"><h3>Lịch Sử (50 gần nhất)</h3><div id="l-history-list"></div><button class="secondary" onclick="loadHistory('l-history-list')">Làm mới</button></div></div>
         <button style="background:#17a2b8" onclick="showDashboard(true)">Xem Dashboard Chi Tiết</button>
         <button class="logout" onclick="doLogout()">Đăng Xuất</button>
     </div>
@@ -160,7 +161,10 @@
         function switchLeaderTab(n) {
             for(let i=1; i<=4; i++) document.getElementById('l-tab-'+i).classList.add('hidden');
             document.getElementById('l-tab-'+n).classList.remove('hidden');
-            document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', i===n-1));
+            document.querySelectorAll('.tab').forEach((t,i) => {
+                t.classList.toggle('active', i===n-1);
+                t.setAttribute('aria-selected', i===n-1);
+            });
             if(n===1) setNow('l-time'); if(n===2) loadLeaderOpen(); if(n===3) loadLeaderActionable(); if(n===4) loadHistory('l-history-list');
         }
         function leaderCreate() {
