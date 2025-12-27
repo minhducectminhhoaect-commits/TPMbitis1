@@ -70,6 +70,7 @@
             <div class="tab" onclick="switchLeaderTab(4)">4. Lịch Sử</div>
         </div>
         <div id="l-tab-1" class="card">
+            <label for="l-chuyen" class="input-label">Chuyền</label>
             <select id="l-chuyen">
                 <option value="">-- Chọn Chuyền --</option>
                 <option value="Hoàn chỉnh 1">Hoàn chỉnh 1</option><option value="Hoàn chỉnh 2">Hoàn chỉnh 2</option>
@@ -79,8 +80,9 @@
                 <option value="Cán dán">Cán dán</option><option value="Cắt trục">Cắt trục</option><option value="Ép dấu chân">Ép dấu chân</option>
                 <option value="Chuẩn bị đế">Chuẩn bị đế</option><option value="Bọc đế">Bọc đế</option><option value="Bán thành phẩm">Bán thành phẩm</option><option value="Cắt nhiệt">Cắt nhiệt</option><option value="Phát sinh">Phát sinh</option>
             </select>
+            <label for="l-msts" class="input-label">Mã số tài sản</label>
             <input type="text" id="l-msts" placeholder="Mã số tài sản (MSTS)">
-            <label style="font-size:12px">Thời điểm hư:</label><input type="datetime-local" id="l-time">
+            <label for="l-time" class="input-label">Thời điểm hư</label><input type="datetime-local" id="l-time">
             <button onclick="leaderCreate()">Gửi Báo Cáo</button>
         </div>
         <div id="l-tab-2" class="hidden"><div class="card"><h3>Chờ Gán Bảo Trì</h3><div id="l-list-open"></div><button class="secondary" onclick="loadLeaderOpen()">Làm mới</button></div></div>
