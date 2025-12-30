@@ -19,12 +19,12 @@
         .role-badge { background: #e3f2fd; color: #0d47a1; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }
         .alert-box { background: #ffebee; border: 2px solid #d32f2f; padding: 15px; border-radius: 8px; margin-bottom: 15px; color: #c62828; animation: pulse 1s infinite; }
         @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(211, 47, 47, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(211, 47, 47, 0); } 100% { box-shadow: 0 0 0 0 rgba(211, 47, 47, 0); } }
-        
+
         .ticket-item { border-left: 5px solid #ccc; padding: 12px; background: #fff; margin-bottom: 10px; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); position: relative; }
         .ticket-item.open { border-left-color: #dc3545; } .ticket-item.assigned { border-left-color: #ffc107; } .ticket-item.fixed { border-left-color: #17a2b8; } .ticket-item.done { border-left-color: #28a745; }
         .status-tag { position: absolute; top: 12px; right: 12px; font-size: 11px; padding: 2px 6px; border-radius: 4px; color: white; font-weight: bold; }
         .tag-open { background: #dc3545; } .tag-assigned { background: #ffc107; color: #333; } .tag-fixed { background: #17a2b8; } .tag-done { background: #28a745; }
-        
+
         .detail-row { display: flex; border-bottom: 1px solid #eee; padding: 8px 0; }
         .detail-label { flex: 1; font-weight: bold; color: #555; font-size: 14px; }
         .detail-val { flex: 2; font-size: 14px; text-align: right; }
@@ -79,8 +79,9 @@
                 <option value="Cán dán">Cán dán</option><option value="Cắt trục">Cắt trục</option><option value="Ép dấu chân">Ép dấu chân</option>
                 <option value="Chuẩn bị đế">Chuẩn bị đế</option><option value="Bọc đế">Bọc đế</option><option value="Bán thành phẩm">Bán thành phẩm</option><option value="Cắt nhiệt">Cắt nhiệt</option><option value="Phát sinh">Phát sinh</option>
             </select>
+            <label for="l-msts" class="input-label">Mã số tài sản</label>
             <input type="text" id="l-msts" placeholder="Mã số tài sản (MSTS)">
-            <label style="font-size:12px">Thời điểm hư:</label><input type="datetime-local" id="l-time">
+            <label for="l-time" style="font-size:12px">Thời điểm hư:</label><input type="datetime-local" id="l-time">
             <button onclick="leaderCreate()">Gửi Báo Cáo</button>
         </div>
         <div id="l-tab-2" class="hidden"><div class="card"><h3>Chờ Gán Bảo Trì</h3><div id="l-list-open"></div><button class="secondary" onclick="loadLeaderOpen()">Làm mới</button></div></div>
@@ -98,14 +99,14 @@
         <button class="logout" onclick="doLogout()">Đăng Xuất</button>
     </div>
 
-    <div id="modal-detail" class="card hidden" style="position:fixed; top:5%; left:5%; right:5%; z-index:200; max-height:90%; overflow-y:auto; border:2px solid #0056b3; box-shadow:0 10px 25px rgba(0,0,0,0.5);"><div class="header" style="border-bottom:1px solid #eee; padding-bottom:10px;"><h3 style="margin:0; color:#0056b3">Chi Tiết Phiếu</h3><button class="secondary" style="width:auto; padding:5px 10px" onclick="document.getElementById('modal-detail').classList.add('hidden')">X</button></div><div id="detail-content"></div><button onclick="document.getElementById('modal-detail').classList.add('hidden')" style="margin-top:15px;">Đóng</button></div>
-    <div id="modal-history" class="card hidden" style="position:fixed; top:20px; left:10px; right:10px; bottom:20px; z-index:100; overflow-y:auto;"><div class="header"><h3>Lịch Sử</h3><button class="secondary" style="width:auto; padding:5px 10px" onclick="document.getElementById('modal-history').classList.add('hidden')">Đóng</button></div><div id="common-history-list">Đang tải...</div></div>
-    
-    <div id="modal-assign" class="card hidden" style="position:fixed; top:20px; left:20px; right:20px; z-index:99; border:2px solid #0056b3"><h3>Xác nhận Bảo Trì Đến</h3><input type="hidden" id="a-id"><input type="hidden" id="a-row"><p>Máy: <b id="a-msts"></b></p><label>Nhân Viên:</label><select id="a-tech"><option value="">-- Chọn Tên --</option><option value="Hoàng Đức Thuần">Hoàng Đức Thuần</option><option value="Bùi Thanh Hoàng">Bùi Thanh Hoàng</option><option value="Nguyễn Tuấn Khanh">Nguyễn Tuấn Khanh</option><option value="Nguyễn Văn Khanh">Nguyễn Văn Khanh</option><option value="Nguyễn Nhất Đẳng">Nguyễn Nhất Đẳng</option><option value="Phan Văn Hồ">Phan Văn Hồ</option><option value="Phạm Đắc Thụy">Phạm Đắc Thụy</option></select><label>Thời gian đến:</label><input type="datetime-local" id="a-time"><button onclick="leaderAssignSubmit()">Xác Nhận</button><button class="secondary" onclick="document.getElementById('modal-assign').classList.add('hidden')">Hủy</button></div>
-    
-    <div id="modal-finish" class="card hidden" style="position:fixed; top:20px; left:20px; right:20px; z-index:99; border:2px solid #28a745"><h3>Báo Cáo Sửa Xong</h3><input type="hidden" id="f-id"><input type="hidden" id="f-row"><p>Máy: <b id="f-msts"></b></p><label>Nhóm lỗi (Nhập tay):</label><input type="text" id="f-nhomloi" placeholder="VD: Cơ khí..."><label>Biện pháp:</label><textarea id="f-bienphap" rows="2"></textarea><label>Giờ sửa xong:</label><input type="datetime-local" id="f-time"><button style="background:#28a745" onclick="techFinishSubmit()">Gửi Báo Cáo</button><button class="secondary" onclick="document.getElementById('modal-finish').classList.add('hidden')">Hủy</button></div>
+    <div id="modal-detail" class="card hidden" role="dialog" aria-modal="true" aria-labelledby="modal-detail-title" tabindex="-1" style="position:fixed; top:5%; left:5%; right:5%; z-index:200; max-height:90%; overflow-y:auto; border:2px solid #0056b3; box-shadow:0 10px 25px rgba(0,0,0,0.5);"><div class="header" style="border-bottom:1px solid #eee; padding-bottom:10px;"><h3 id="modal-detail-title" style="margin:0; color:#0056b3">Chi Tiết Phiếu</h3><button class="secondary" aria-label="Đóng" style="width:auto; padding:5px 10px" onclick="document.getElementById('modal-detail').classList.add('hidden')">X</button></div><div id="detail-content"></div><button onclick="document.getElementById('modal-detail').classList.add('hidden')" style="margin-top:15px;">Đóng</button></div>
+    <div id="modal-history" class="card hidden" role="dialog" aria-modal="true" aria-labelledby="modal-history-title" tabindex="-1" style="position:fixed; top:20px; left:10px; right:10px; bottom:20px; z-index:100; overflow-y:auto;"><div class="header"><h3 id="modal-history-title">Lịch Sử</h3><button class="secondary" aria-label="Đóng" style="width:auto; padding:5px 10px" onclick="document.getElementById('modal-history').classList.add('hidden')">Đóng</button></div><div id="common-history-list">Đang tải...</div></div>
 
-    <div id="modal-action" class="card hidden" style="position:fixed; top:20px; left:20px; right:20px; z-index:99; border:2px solid #17a2b8"><h3>Xử Lý Nghiệm Thu</h3><input type="hidden" id="c-id"><input type="hidden" id="c-row"><input type="hidden" id="c-type"><p>Máy: <b id="c-msts"></b></p><p id="c-status-text"></p><div id="swap-form" class="hidden"><div style="background:#fff3cd; padding:10px; border-radius:6px; margin-bottom:10px;"><label>Mã Máy Thay Thế:</label><input type="text" id="c-new-msts"><label>Giờ Chuyền Chạy Lại:</label><input type="datetime-local" id="c-time-swap"><button style="background:#ffc107; color:black" onclick="leaderSwapSubmit()">Xác Nhận Thay Máy</button></div></div><div id="confirm-form" class="hidden"><label>Giờ Chuyền Chạy Lại:</label><input type="datetime-local" id="c-time-confirm"><p style="font-size:11px;color:#666"><i>(Mặc định lấy giờ sửa xong)</i></p><button style="background:#28a745" onclick="leaderConfirmSubmit()">Nghiệm Thu (Done)</button></div><button class="secondary" onclick="document.getElementById('modal-action').classList.add('hidden')">Hủy</button></div>
+    <div id="modal-assign" class="card hidden" role="dialog" aria-modal="true" aria-labelledby="modal-assign-title" tabindex="-1" style="position:fixed; top:20px; left:20px; right:20px; z-index:99; border:2px solid #0056b3"><h3 id="modal-assign-title">Xác nhận Bảo Trì Đến</h3><input type="hidden" id="a-id"><input type="hidden" id="a-row"><p>Máy: <b id="a-msts"></b></p><label>Nhân Viên:</label><select id="a-tech"><option value="">-- Chọn Tên --</option><option value="Hoàng Đức Thuần">Hoàng Đức Thuần</option><option value="Bùi Thanh Hoàng">Bùi Thanh Hoàng</option><option value="Nguyễn Tuấn Khanh">Nguyễn Tuấn Khanh</option><option value="Nguyễn Văn Khanh">Nguyễn Văn Khanh</option><option value="Nguyễn Nhất Đẳng">Nguyễn Nhất Đẳng</option><option value="Phan Văn Hồ">Phan Văn Hồ</option><option value="Phạm Đắc Thụy">Phạm Đắc Thụy</option></select><label>Thời gian đến:</label><input type="datetime-local" id="a-time"><button onclick="leaderAssignSubmit()">Xác Nhận</button><button class="secondary" onclick="document.getElementById('modal-assign').classList.add('hidden')">Hủy</button></div>
+
+    <div id="modal-finish" class="card hidden" role="dialog" aria-modal="true" aria-labelledby="modal-finish-title" tabindex="-1" style="position:fixed; top:20px; left:20px; right:20px; z-index:99; border:2px solid #28a745"><h3 id="modal-finish-title">Báo Cáo Sửa Xong</h3><input type="hidden" id="f-id"><input type="hidden" id="f-row"><p>Máy: <b id="f-msts"></b></p><label>Nhóm lỗi (Nhập tay):</label><input type="text" id="f-nhomloi" placeholder="VD: Cơ khí..."><label>Biện pháp:</label><textarea id="f-bienphap" rows="2"></textarea><label>Giờ sửa xong:</label><input type="datetime-local" id="f-time"><button style="background:#28a745" onclick="techFinishSubmit()">Gửi Báo Cáo</button><button class="secondary" onclick="document.getElementById('modal-finish').classList.add('hidden')">Hủy</button></div>
+
+    <div id="modal-action" class="card hidden" role="dialog" aria-modal="true" aria-labelledby="modal-action-title" tabindex="-1" style="position:fixed; top:20px; left:20px; right:20px; z-index:99; border:2px solid #17a2b8"><h3 id="modal-action-title">Xử Lý Nghiệm Thu</h3><input type="hidden" id="c-id"><input type="hidden" id="c-row"><input type="hidden" id="c-type"><p>Máy: <b id="c-msts"></b></p><p id="c-status-text"></p><div id="swap-form" class="hidden"><div style="background:#fff3cd; padding:10px; border-radius:6px; margin-bottom:10px;"><label>Mã Máy Thay Thế:</label><input type="text" id="c-new-msts"><label>Giờ Chuyền Chạy Lại:</label><input type="datetime-local" id="c-time-swap"><button style="background:#ffc107; color:black" onclick="leaderSwapSubmit()">Xác Nhận Thay Máy</button></div></div><div id="confirm-form" class="hidden"><label>Giờ Chuyền Chạy Lại:</label><input type="datetime-local" id="c-time-confirm"><p style="font-size:11px;color:#666"><i>(Mặc định lấy giờ sửa xong)</i></p><button style="background:#28a745" onclick="leaderConfirmSubmit()">Nghiệm Thu (Done)</button></div><button class="secondary" onclick="document.getElementById('modal-action').classList.add('hidden')">Hủy</button></div>
 
     <div id="screen-dashboard" class="hidden"><div class="header"><h3>Dashboard TPM</h3><button class="secondary" style="width:auto; padding:5px 15px;" onclick="goBack()">Quay Lại</button></div><div class="card"><div class="filter-group"><select id="d-vsm"><option value="all">Tất cả VSM</option><option value="VSM 1">VSM 1</option><option value="VSM 2">VSM 2</option></select><select id="d-line"><option value="all">Tất cả Chuyền</option><option value="Hoàn chỉnh 1">Hoàn chỉnh 1</option><option value="Hoàn chỉnh 2">Hoàn chỉnh 2</option><option value="May 1">May 1</option><option value="May 2">May 2</option><option value="May 3">May 3</option><option value="May 4">May 4</option><option value="May 5">May 5</option><option value="May 6">May 6</option><option value="Dập 1">Dập 1</option><option value="Dập 2">Dập 2</option><option value="In lụa">In lụa</option><option value="Bế hình">Bế hình</option><option value="Cán dán">Cán dán</option><option value="Cắt trục">Cắt trục</option><option value="Ép dấu chân">Ép dấu chân</option><option value="Chuẩn bị đế">Chuẩn bị đế</option><option value="Bọc đế">Bọc đế</option><option value="Bán thành phẩm">Bán thành phẩm</option><option value="Cắt nhiệt">Cắt nhiệt</option><option value="Phát sinh">Phát sinh</option></select></div><div class="filter-group"><input type="date" id="d-start" title="Từ ngày"><input type="date" id="d-end" title="Đến ngày"></div><div class="filter-group"><button onclick="loadDashboardData()">Lọc Dữ Liệu</button><button class="secondary" onclick="resetFilters()">Reset (Xem Tất Cả)</button></div></div><div class="kpi-grid"><div class="kpi-box"><span class="kpi-num" id="kpi-total">0</span><span class="kpi-label">Tổng Phiếu</span></div><div class="kpi-box"><span class="kpi-num" id="kpi-dt">0</span><span class="kpi-label">Downtime (h)</span></div><div class="kpi-box"><span class="kpi-num" id="kpi-mttr">0</span><span class="kpi-label">MTTR (phút)</span></div></div><div class="chart-container"><canvas id="c-line-ticket"></canvas></div><div class="chart-container"><canvas id="c-line-dt"></canvas></div><div class="chart-container"><canvas id="c-tech-ticket"></canvas></div><div class="chart-container"><canvas id="c-tech-mttr"></canvas></div></div>
 
@@ -120,8 +121,20 @@
         const beepSound = new Audio("data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU");
         const vsmMap = {"Hoàn chỉnh 1": "VSM 1", "Hoàn chỉnh 2": "VSM 2", "May 1": "VSM 1", "May 2": "VSM 1", "May 3": "VSM 1", "May 4": "VSM 1", "May 5": "VSM 2", "May 6": "VSM 2", "Dập 1": "VSM 1", "Dập 2": "VSM 2", "In lụa": "VSM 1", "Bế hình": "VSM 1", "Cán dán": "VSM 1", "Cắt trục": "VSM 1", "Ép dấu chân": "VSM 2", "Chuẩn bị đế": "VSM 2", "Bọc đế": "VSM 2", "Bán thành phẩm": "VSM 2", "Cắt nhiệt": "VSM 1", "Phát sinh": "Phát sinh"};
 
-        document.addEventListener('DOMContentLoaded', () => { checkAutoLogin(); });
-        
+        document.addEventListener('DOMContentLoaded', () => {
+            checkAutoLogin();
+            // Accessibility: Close modals with Escape key
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    const openModals = document.querySelectorAll('[role="dialog"]:not(.hidden)');
+                    if (openModals.length > 0) {
+                        // Close the last one (highest z-index effectively)
+                        openModals[openModals.length - 1].classList.add('hidden');
+                    }
+                }
+            });
+        });
+
         function showToast(msg, type='info') {
             let c = document.getElementById('toast-container');
             if (!c) { c = document.createElement('div'); c.id='toast-container'; c.className='toast-container'; document.body.appendChild(c); }
@@ -166,8 +179,8 @@
         function leaderCreate() {
             const d = { chuyen:document.getElementById('l-chuyen').value, ma_so:document.getElementById('l-msts').value, gio_hu:document.getElementById('l-time').value, nguoi_tao:currentUser.fullname };
             if(!d.ma_so) return showToast("Thiếu thông tin", "error");
-            post({action:'leader_create', data:d}, res => { 
-                showToast(res.message, "success"); document.getElementById('l-msts').value=''; 
+            post({action:'leader_create', data:d}, res => {
+                showToast(res.message, "success"); document.getElementById('l-msts').value='';
                 switchLeaderTab(2); // TỰ ĐỘNG CHUYỂN TAB 2
             });
         }
@@ -214,10 +227,10 @@
             const i=ticketCache[id];
             document.getElementById('c-id').value = i.id; document.getElementById('c-row').value = i.rowIndex;
             document.getElementById('c-type').value = i.type;
-            document.getElementById('c-msts').innerText = i.ma_so; 
+            document.getElementById('c-msts').innerText = i.ma_so;
             const statusTxt = i.type==='fixed' ? `Bảo trì xong: ${new Date(i.gio_xong).toLocaleTimeString()}` : `Đang sửa bởi: ${i.ten_bao_tri}`;
             document.getElementById('c-status-text').innerText = statusTxt;
-            
+
             if(i.type === 'swap') {
                 document.getElementById('swap-form').classList.remove('hidden');
                 document.getElementById('confirm-form').classList.add('hidden');
@@ -256,10 +269,10 @@
 
                 const divAlert = document.getElementById('tech-alert-list');
                 const curAlert = res.data.alertJobs.length;
-                if(curAlert > 0) { 
-                    document.getElementById('tech-alert-area').classList.remove('hidden'); 
+                if(curAlert > 0) {
+                    document.getElementById('tech-alert-area').classList.remove('hidden');
                     let alertHtml = '';
-                    res.data.alertJobs.forEach(i => alertHtml += `<div style="border-bottom:1px dashed #ccc; padding:5px;"><b>${i.chuyen}</b>: ${i.ma_so}</div>`); 
+                    res.data.alertJobs.forEach(i => alertHtml += `<div style="border-bottom:1px dashed #ccc; padding:5px;"><b>${i.chuyen}</b>: ${i.ma_so}</div>`);
                     divAlert.innerHTML = alertHtml;
                     if(silent && curAlert > lastAlertCount) notifyUser();
                 } else {
@@ -267,7 +280,7 @@
                     document.getElementById('tech-alert-area').classList.add('hidden');
                 }
                 lastAlertCount = curAlert;
-                
+
                 document.getElementById('count-myjob').innerText = res.data.myJobs.length;
                 if(res.data.myJobs.length === 0 && !silent) {
                     divMy.innerHTML = 'Chưa có việc.';
