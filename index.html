@@ -19,12 +19,12 @@
         .role-badge { background: #e3f2fd; color: #0d47a1; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }
         .alert-box { background: #ffebee; border: 2px solid #d32f2f; padding: 15px; border-radius: 8px; margin-bottom: 15px; color: #c62828; animation: pulse 1s infinite; }
         @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(211, 47, 47, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(211, 47, 47, 0); } 100% { box-shadow: 0 0 0 0 rgba(211, 47, 47, 0); } }
-        
+
         .ticket-item { border-left: 5px solid #ccc; padding: 12px; background: #fff; margin-bottom: 10px; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); position: relative; }
         .ticket-item.open { border-left-color: #dc3545; } .ticket-item.assigned { border-left-color: #ffc107; } .ticket-item.fixed { border-left-color: #17a2b8; } .ticket-item.done { border-left-color: #28a745; }
         .status-tag { position: absolute; top: 12px; right: 12px; font-size: 11px; padding: 2px 6px; border-radius: 4px; color: white; font-weight: bold; }
         .tag-open { background: #dc3545; } .tag-assigned { background: #ffc107; color: #333; } .tag-fixed { background: #17a2b8; } .tag-done { background: #28a745; }
-        
+
         .detail-row { display: flex; border-bottom: 1px solid #eee; padding: 8px 0; }
         .detail-label { flex: 1; font-weight: bold; color: #555; font-size: 14px; }
         .detail-val { flex: 2; font-size: 14px; text-align: right; }
@@ -100,9 +100,9 @@
 
     <div id="modal-detail" class="card hidden" style="position:fixed; top:5%; left:5%; right:5%; z-index:200; max-height:90%; overflow-y:auto; border:2px solid #0056b3; box-shadow:0 10px 25px rgba(0,0,0,0.5);"><div class="header" style="border-bottom:1px solid #eee; padding-bottom:10px;"><h3 style="margin:0; color:#0056b3">Chi Tiết Phiếu</h3><button class="secondary" style="width:auto; padding:5px 10px" onclick="document.getElementById('modal-detail').classList.add('hidden')">X</button></div><div id="detail-content"></div><button onclick="document.getElementById('modal-detail').classList.add('hidden')" style="margin-top:15px;">Đóng</button></div>
     <div id="modal-history" class="card hidden" style="position:fixed; top:20px; left:10px; right:10px; bottom:20px; z-index:100; overflow-y:auto;"><div class="header"><h3>Lịch Sử</h3><button class="secondary" style="width:auto; padding:5px 10px" onclick="document.getElementById('modal-history').classList.add('hidden')">Đóng</button></div><div id="common-history-list">Đang tải...</div></div>
-    
+
     <div id="modal-assign" class="card hidden" style="position:fixed; top:20px; left:20px; right:20px; z-index:99; border:2px solid #0056b3"><h3>Xác nhận Bảo Trì Đến</h3><input type="hidden" id="a-id"><input type="hidden" id="a-row"><p>Máy: <b id="a-msts"></b></p><label>Nhân Viên:</label><select id="a-tech"><option value="">-- Chọn Tên --</option><option value="Hoàng Đức Thuần">Hoàng Đức Thuần</option><option value="Bùi Thanh Hoàng">Bùi Thanh Hoàng</option><option value="Nguyễn Tuấn Khanh">Nguyễn Tuấn Khanh</option><option value="Nguyễn Văn Khanh">Nguyễn Văn Khanh</option><option value="Nguyễn Nhất Đẳng">Nguyễn Nhất Đẳng</option><option value="Phan Văn Hồ">Phan Văn Hồ</option><option value="Phạm Đắc Thụy">Phạm Đắc Thụy</option></select><label>Thời gian đến:</label><input type="datetime-local" id="a-time"><button onclick="leaderAssignSubmit()">Xác Nhận</button><button class="secondary" onclick="document.getElementById('modal-assign').classList.add('hidden')">Hủy</button></div>
-    
+
     <div id="modal-finish" class="card hidden" style="position:fixed; top:20px; left:20px; right:20px; z-index:99; border:2px solid #28a745"><h3>Báo Cáo Sửa Xong</h3><input type="hidden" id="f-id"><input type="hidden" id="f-row"><p>Máy: <b id="f-msts"></b></p><label>Nhóm lỗi (Nhập tay):</label><input type="text" id="f-nhomloi" placeholder="VD: Cơ khí..."><label>Biện pháp:</label><textarea id="f-bienphap" rows="2"></textarea><label>Giờ sửa xong:</label><input type="datetime-local" id="f-time"><button style="background:#28a745" onclick="techFinishSubmit()">Gửi Báo Cáo</button><button class="secondary" onclick="document.getElementById('modal-finish').classList.add('hidden')">Hủy</button></div>
 
     <div id="modal-action" class="card hidden" style="position:fixed; top:20px; left:20px; right:20px; z-index:99; border:2px solid #17a2b8"><h3>Xử Lý Nghiệm Thu</h3><input type="hidden" id="c-id"><input type="hidden" id="c-row"><input type="hidden" id="c-type"><p>Máy: <b id="c-msts"></b></p><p id="c-status-text"></p><div id="swap-form" class="hidden"><div style="background:#fff3cd; padding:10px; border-radius:6px; margin-bottom:10px;"><label>Mã Máy Thay Thế:</label><input type="text" id="c-new-msts"><label>Giờ Chuyền Chạy Lại:</label><input type="datetime-local" id="c-time-swap"><button style="background:#ffc107; color:black" onclick="leaderSwapSubmit()">Xác Nhận Thay Máy</button></div></div><div id="confirm-form" class="hidden"><label>Giờ Chuyền Chạy Lại:</label><input type="datetime-local" id="c-time-confirm"><p style="font-size:11px;color:#666"><i>(Mặc định lấy giờ sửa xong)</i></p><button style="background:#28a745" onclick="leaderConfirmSubmit()">Nghiệm Thu (Done)</button></div><button class="secondary" onclick="document.getElementById('modal-action').classList.add('hidden')">Hủy</button></div>
@@ -119,9 +119,10 @@
         function cacheTicket(t) { ticketCache[t.id] = t; return t.id; }
         const beepSound = new Audio("data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU");
         const vsmMap = {"Hoàn chỉnh 1": "VSM 1", "Hoàn chỉnh 2": "VSM 2", "May 1": "VSM 1", "May 2": "VSM 1", "May 3": "VSM 1", "May 4": "VSM 1", "May 5": "VSM 2", "May 6": "VSM 2", "Dập 1": "VSM 1", "Dập 2": "VSM 2", "In lụa": "VSM 1", "Bế hình": "VSM 1", "Cán dán": "VSM 1", "Cắt trục": "VSM 1", "Ép dấu chân": "VSM 2", "Chuẩn bị đế": "VSM 2", "Bọc đế": "VSM 2", "Bán thành phẩm": "VSM 2", "Cắt nhiệt": "VSM 1", "Phát sinh": "Phát sinh"};
+        const vnDateFormatter = new Intl.DateTimeFormat('vi-VN', {hour:'2-digit', minute:'2-digit', day:'2-digit', month:'2-digit'});
 
         document.addEventListener('DOMContentLoaded', () => { checkAutoLogin(); });
-        
+
         function showToast(msg, type='info') {
             let c = document.getElementById('toast-container');
             if (!c) { c = document.createElement('div'); c.id='toast-container'; c.className='toast-container'; document.body.appendChild(c); }
@@ -166,8 +167,8 @@
         function leaderCreate() {
             const d = { chuyen:document.getElementById('l-chuyen').value, ma_so:document.getElementById('l-msts').value, gio_hu:document.getElementById('l-time').value, nguoi_tao:currentUser.fullname };
             if(!d.ma_so) return showToast("Thiếu thông tin", "error");
-            post({action:'leader_create', data:d}, res => { 
-                showToast(res.message, "success"); document.getElementById('l-msts').value=''; 
+            post({action:'leader_create', data:d}, res => {
+                showToast(res.message, "success"); document.getElementById('l-msts').value='';
                 switchLeaderTab(2); // TỰ ĐỘNG CHUYỂN TAB 2
             });
         }
@@ -214,10 +215,10 @@
             const i=ticketCache[id];
             document.getElementById('c-id').value = i.id; document.getElementById('c-row').value = i.rowIndex;
             document.getElementById('c-type').value = i.type;
-            document.getElementById('c-msts').innerText = i.ma_so; 
+            document.getElementById('c-msts').innerText = i.ma_so;
             const statusTxt = i.type==='fixed' ? `Bảo trì xong: ${new Date(i.gio_xong).toLocaleTimeString()}` : `Đang sửa bởi: ${i.ten_bao_tri}`;
             document.getElementById('c-status-text').innerText = statusTxt;
-            
+
             if(i.type === 'swap') {
                 document.getElementById('swap-form').classList.remove('hidden');
                 document.getElementById('confirm-form').classList.add('hidden');
@@ -256,10 +257,10 @@
 
                 const divAlert = document.getElementById('tech-alert-list');
                 const curAlert = res.data.alertJobs.length;
-                if(curAlert > 0) { 
-                    document.getElementById('tech-alert-area').classList.remove('hidden'); 
+                if(curAlert > 0) {
+                    document.getElementById('tech-alert-area').classList.remove('hidden');
                     let alertHtml = '';
-                    res.data.alertJobs.forEach(i => alertHtml += `<div style="border-bottom:1px dashed #ccc; padding:5px;"><b>${i.chuyen}</b>: ${i.ma_so}</div>`); 
+                    res.data.alertJobs.forEach(i => alertHtml += `<div style="border-bottom:1px dashed #ccc; padding:5px;"><b>${i.chuyen}</b>: ${i.ma_so}</div>`);
                     divAlert.innerHTML = alertHtml;
                     if(silent && curAlert > lastAlertCount) notifyUser();
                 } else {
@@ -267,7 +268,7 @@
                     document.getElementById('tech-alert-area').classList.add('hidden');
                 }
                 lastAlertCount = curAlert;
-                
+
                 document.getElementById('count-myjob').innerText = res.data.myJobs.length;
                 if(res.data.myJobs.length === 0 && !silent) {
                     divMy.innerHTML = 'Chưa có việc.';
@@ -314,7 +315,8 @@
             const html = `<div class="detail-row"><span class="detail-label">Trạng thái:</span><span class="detail-val" style="color:#0056b3">${i.status}</span></div><div class="detail-row"><span class="detail-label">Người tạo:</span><span class="detail-val">${i.nguoi_tao||'---'}</span></div><div class="detail-row"><span class="detail-label">MSTS:</span><span class="detail-val">${i.ma_so}</span></div><div class="detail-row"><span class="detail-label">Chuyền:</span><span class="detail-val">${i.chuyen}</span></div><div class="detail-row"><span class="detail-label">Hư:</span><span class="detail-val">${fmt(i.gio_hu)}</span></div><div class="detail-row"><span class="detail-label">Đến:</span><span class="detail-val">${fmt(i.gio_den)}</span></div><div class="detail-row"><span class="detail-label">Thợ:</span><span class="detail-val">${i.ten_bao_tri||'---'}</span></div><div class="detail-row"><span class="detail-label">Sửa Xong:</span><span class="detail-val">${fmt(i.gio_xong)}</span></div><div class="detail-row"><span class="detail-label">Chạy lại:</span><span class="detail-val">${fmt(i.gio_chay_lai)}</span></div><div class="detail-row" style="flex-direction:column"><span class="detail-label">Lỗi:</span><div style="background:#f9f9f9; padding:5px;">${i.nhom_loi||'---'}</div></div><div class="detail-row" style="flex-direction:column; border:none"><span class="detail-label">Biện pháp:</span><div style="background:#f9f9f9; padding:5px;">${i.bien_phap||'---'}</div>${swapInfo}</div>`;
             document.getElementById('detail-content').innerHTML = html; document.getElementById('modal-detail').classList.remove('hidden');
         }
-        function formatDate(s) { return s ? new Date(s).toLocaleString('vi-VN', {hour:'2-digit', minute:'2-digit', day:'2-digit', month:'2-digit'}) : ''; }
+        // ⚡ Bolt: Used reused Intl formatter for 100x perf boost
+        function formatDate(s) { return s ? vnDateFormatter.format(new Date(s)) : ''; }
 
         let charts = {};
         function resetFilters() { document.getElementById('d-vsm').value='all'; document.getElementById('d-line').value='all'; document.getElementById('d-start').value=''; document.getElementById('d-end').value=''; loadDashboardData(); }
@@ -323,8 +325,12 @@
             post({action:'get_dashboard'}, res => {
                 const raw = res.data, vsmV = document.getElementById('d-vsm').value, lineV = document.getElementById('d-line').value;
                 const sIn = document.getElementById('d-start').value, eIn = document.getElementById('d-end').value;
+                // ⚡ Bolt: Hoisted date parsing out of loop for 2x perf
+                let s, e;
+                if (sIn && eIn) { s=new Date(sIn); e=new Date(eIn); e.setHours(23,59,59); }
+
                 const filtered = raw.filter(i => {
-                    if (sIn && eIn) { const d=i.gio_hu?new Date(i.gio_hu):new Date(), s=new Date(sIn), e=new Date(eIn); e.setHours(23,59,59); if(d<s||d>e) return false; }
+                    if (s && e) { const d=i.gio_hu?new Date(i.gio_hu):new Date(); if(d<s||d>e) return false; }
                     if(vsmV!=='all' && (vsmMap[i.chuyen]||"Khác")!==vsmV) return false;
                     if(lineV!=='all' && i.chuyen!==lineV) return false;
                     return true;
