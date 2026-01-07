@@ -323,8 +323,13 @@
             post({action:'get_dashboard'}, res => {
                 const raw = res.data, vsmV = document.getElementById('d-vsm').value, lineV = document.getElementById('d-line').value;
                 const sIn = document.getElementById('d-start').value, eIn = document.getElementById('d-end').value;
+
+                // Bolt: Hoist date parsing for performance
+                let sDate, eDate;
+                if(sIn && eIn) { sDate=new Date(sIn); eDate=new Date(eIn); eDate.setHours(23,59,59); }
+
                 const filtered = raw.filter(i => {
-                    if (sIn && eIn) { const d=i.gio_hu?new Date(i.gio_hu):new Date(), s=new Date(sIn), e=new Date(eIn); e.setHours(23,59,59); if(d<s||d>e) return false; }
+                    if (sIn && eIn) { const d=i.gio_hu?new Date(i.gio_hu):new Date(); if(d<sDate||d>eDate) return false; }
                     if(vsmV!=='all' && (vsmMap[i.chuyen]||"Khác")!==vsmV) return false;
                     if(lineV!=='all' && i.chuyen!==lineV) return false;
                     return true;
@@ -334,10 +339,14 @@
                     const l=i.chuyen||"Khác", t=i.ten_bao_tri||"Chưa gán";
                     if(!lS[l])lS[l]={tk:0,dt:0}; if(!tS[t])tS[t]={tk:0,dt:0};
                     lS[l].tk++; if(i.ten_bao_tri) tS[t].tk++;
+
+                    // Bolt: Cache date parsing
+                    const dHu = i.gio_hu ? new Date(i.gio_hu) : null;
+
                     // Downtime Chuyền: Giờ chạy lại (I) - Giờ hư (F)
-                    if(i.gio_hu && i.gio_chay_lai){ const dt=(new Date(i.gio_chay_lai)-new Date(i.gio_hu))/36e5; if(dt>0){ tot+=dt; lS[l].dt+=dt; } }
+                    if(dHu && i.gio_chay_lai){ const dt=(new Date(i.gio_chay_lai)-dHu)/36e5; if(dt>0){ tot+=dt; lS[l].dt+=dt; } }
                     // MTTR Máy: Giờ sửa xong (L) - Giờ hư (F)
-                    if(i.gio_hu && i.gio_xong){ const rep=(new Date(i.gio_xong)-new Date(i.gio_hu))/60000; if(rep>0 && i.ten_bao_tri){ tS[t].dt+=rep; mttrS+=rep; mttrC++; } }
+                    if(dHu && i.gio_xong){ const rep=(new Date(i.gio_xong)-dHu)/60000; if(rep>0 && i.ten_bao_tri){ tS[t].dt+=rep; mttrS+=rep; mttrC++; } }
                 });
                 document.getElementById('kpi-total').innerText=filtered.length; document.getElementById('kpi-dt').innerText=tot.toFixed(1); document.getElementById('kpi-mttr').innerText=mttrC?(mttrS/mttrC).toFixed(0):0;
                 drawC('c-line-ticket','Số phiếu',lS,'tk','#36a2eb'); drawC('c-line-dt','Downtime Chuyền (h)',lS,'dt','#ff6384'); drawC('c-tech-ticket','Phiếu',tS,'tk','#4bc0c0');
