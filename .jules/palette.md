@@ -1,0 +1,3 @@
+## 2024-05-23 - Accessibility in Legacy Single-Page Forms
+**Learning:** Legacy forms often rely on placeholders instead of visible labels to save space, but this hurts accessibility and usability when fields are populated or on mobile. Adding standard `.input-label` classes and explicit `<label>` tags significantly improves structure without breaking the visual design, as the existing CSS classes were already available but underutilized.
+**Action:** When auditing legacy forms, first check if a label style class exists in the CSS. If so, systematically replace placeholders or inline-styled text with proper `<label for="...">` elements using that class to ensure consistency and accessibility.
