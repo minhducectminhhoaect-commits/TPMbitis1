@@ -1,0 +1,3 @@
+## 2024-05-20 - Hoisting Date Parsing in Loops
+**Learning:** Parsing dates (`new Date(string)`) is surprisingly expensive in JavaScript loops. In `loadDashboardData`, parsing the same date string multiple times (for filtering, Downtime calc, and MTTR calc) and re-parsing static filter dates (`sIn`, `eIn`) inside the loop caused a significant bottleneck.
+**Action:** Always hoist static date parsing outside of loops. When iterating over objects with date strings that are needed multiple times, parse them once, store the result (or the timestamp via `.getTime()`), and reuse it. Combining filter and map/reduce loops into a single pass also avoids intermediate array allocation.
