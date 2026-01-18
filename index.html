@@ -81,7 +81,7 @@
             </select>
             <input type="text" id="l-msts" placeholder="Mã số tài sản (MSTS)">
             <label style="font-size:12px">Thời điểm hư:</label><input type="datetime-local" id="l-time">
-            <button onclick="leaderCreate()">Gửi Báo Cáo</button>
+            <button onclick="leaderCreate(this)">Gửi Báo Cáo</button>
         </div>
         <div id="l-tab-2" class="hidden"><div class="card"><h3>Chờ Gán Bảo Trì</h3><div id="l-list-open"></div><button class="secondary" onclick="loadLeaderOpen()">Làm mới</button></div></div>
         <div id="l-tab-3" class="hidden"><div class="card"><h3>Cần Xử Lý (Nghiệm thu/Thay máy)</h3><div id="l-list-actionable"></div><button class="secondary" onclick="loadLeaderActionable()">Làm mới</button></div></div>
@@ -130,7 +130,19 @@
             setTimeout(() => { t.style.animation = 'fadeOut 0.5s forwards'; setTimeout(() => t.remove(), 500); }, 3000);
         }
 
-        function post(data, cb) { if(API_URL.includes('YOUR_')) { showToast("Chưa dán API URL!", "error"); return; } fetch(API_URL, {method:'POST', body:JSON.stringify(data)}).then(r=>r.json()).then(cb).catch(e=>console.log(e)); }
+        function post(data, cb, btn) {
+            if(btn) { btn.dataset.og = btn.innerText; btn.innerText = "Đang xử lý..."; btn.disabled = true; }
+            if(API_URL.includes('YOUR_')) {
+                showToast("Chưa dán API URL!", "error");
+                if(btn) { btn.innerText = btn.dataset.og; btn.disabled = false; }
+                return;
+            }
+            fetch(API_URL, {method:'POST', body:JSON.stringify(data)})
+                .then(r=>r.json())
+                .then(res => { cb(res); })
+                .catch(e=>console.log(e))
+                .finally(() => { if(btn) { btn.innerText = btn.dataset.og; btn.disabled = false; } });
+        }
         function setNow(id) { const now = new Date(); now.setMinutes(now.getMinutes() - now.getTimezoneOffset()); document.getElementById(id).value = now.toISOString().slice(0,16); }
         function notifyUser() { try { beepSound.play().catch(e=>{}); if(navigator.vibrate) navigator.vibrate([500, 300, 500]); } catch(e){} }
         function showScreen(id) { document.querySelectorAll('body > div[id^="screen-"]').forEach(d => d.classList.add('hidden')); document.getElementById(id).classList.remove('hidden'); }
@@ -143,16 +155,10 @@
             else { showScreen('screen-tech'); loadTechJobs(); startAutoRefresh(); }
         }
         function handleLogin() {
-            if(API_URL.includes('YOUR_')) { showToast("Chưa dán API URL!", "error"); return; }
             const u = document.getElementById('log-user').value, p = document.getElementById('log-pass').value;
-            const btn = document.querySelector('#screen-login button');
-            btn.innerText = "Đang xử lý...";
-            btn.disabled = true;
             post({action:'login', username:u, password:p}, res => {
-                btn.innerText = "Đăng Nhập";
-                btn.disabled = false;
                 currentUser = res; localStorage.setItem('tpm_user', JSON.stringify(currentUser)); restoreSession();
-            });
+            }, document.querySelector('#screen-login button'));
         }
         function doLogout() { if(refreshInterval) clearInterval(refreshInterval); localStorage.removeItem('tpm_user'); location.reload(); }
 
@@ -163,13 +169,13 @@
             document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', i===n-1));
             if(n===1) setNow('l-time'); if(n===2) loadLeaderOpen(); if(n===3) loadLeaderActionable(); if(n===4) loadHistory('l-history-list');
         }
-        function leaderCreate() {
+        function leaderCreate(btn) {
             const d = { chuyen:document.getElementById('l-chuyen').value, ma_so:document.getElementById('l-msts').value, gio_hu:document.getElementById('l-time').value, nguoi_tao:currentUser.fullname };
             if(!d.ma_so) return showToast("Thiếu thông tin", "error");
             post({action:'leader_create', data:d}, res => { 
                 showToast(res.message, "success"); document.getElementById('l-msts').value=''; 
                 switchLeaderTab(2); // TỰ ĐỘNG CHUYỂN TAB 2
-            });
+            }, btn);
         }
         function loadLeaderOpen() {
             const div = document.getElementById('l-list-open'); div.innerHTML = 'Đang tải...';
@@ -184,12 +190,12 @@
             });
         }
         function openAssign(id) { const i=ticketCache[id]; document.getElementById('a-id').value=i.id; document.getElementById('a-row').value=i.rowIndex; document.getElementById('a-msts').innerText=i.ma_so; setNow('a-time'); document.getElementById('modal-assign').classList.remove('hidden'); }
-        function leaderAssignSubmit() {
+        function leaderAssignSubmit(btn) {
             const t = document.getElementById('a-tech').value, time = document.getElementById('a-time').value;
             if(!t || !time) return showToast("Vui lòng chọn Bảo trì và Giờ đến!", "error");
             post({action:'leader_assign', id:document.getElementById('a-id').value, rowIndex:document.getElementById('a-row').value, data:{ten_bao_tri:t, gio_den:time}}, res => {
                 showToast(res.message, "success"); document.getElementById('modal-assign').classList.add('hidden'); loadLeaderOpen();
-            });
+            }, btn);
         }
         // NEW: NGHIỆM THU / THAY MÁY
         function loadLeaderActionable() {
@@ -230,18 +236,18 @@
             }
             document.getElementById('modal-action').classList.remove('hidden');
         }
-        function leaderSwapSubmit() {
+        function leaderSwapSubmit(btn) {
             const newM = document.getElementById('c-new-msts').value, time = document.getElementById('c-time-swap').value;
             if(!newM) return showToast("Nhập MSTS máy mới!", "error");
             post({action:'leader_update_swap', id:document.getElementById('c-id').value, rowIndex:document.getElementById('c-row').value, data:{gio_chay_lai:time, ma_so_thay_the:newM}}, res => {
                 showToast(res.message, "success"); document.getElementById('modal-action').classList.add('hidden'); loadLeaderActionable();
-            });
+            }, btn);
         }
-        function leaderConfirmSubmit() {
+        function leaderConfirmSubmit(btn) {
             const time = document.getElementById('c-time-confirm').value;
             post({action:'leader_confirm_done', id:document.getElementById('c-id').value, rowIndex:document.getElementById('c-row').value, data:{gio_chay_lai: time}}, res => {
                 showToast(res.message, "success"); document.getElementById('modal-action').classList.add('hidden'); loadLeaderActionable();
-            });
+            }, btn);
         }
 
         // TECH
@@ -284,10 +290,10 @@
             });
         }
         function openFinish(id) { const i=ticketCache[id]; document.getElementById('f-id').value=i.id; document.getElementById('f-row').value=i.rowIndex; document.getElementById('f-msts').innerText=i.ma_so; setNow('f-time'); document.getElementById('modal-finish').classList.remove('hidden'); }
-        function techFinishSubmit() {
+        function techFinishSubmit(btn) {
             const d = { nhom_loi:document.getElementById('f-nhomloi').value, bien_phap:document.getElementById('f-bienphap').value, gio_xong:document.getElementById('f-time').value };
             if(!d.gio_xong) return showToast("Nhập giờ xong", "error");
-            post({action:'tech_finish', id:document.getElementById('f-id').value, rowIndex:document.getElementById('f-row').value, data:d}, res => { showToast(res.message, "success"); document.getElementById('modal-finish').classList.add('hidden'); loadTechJobs(); });
+            post({action:'tech_finish', id:document.getElementById('f-id').value, rowIndex:document.getElementById('f-row').value, data:d}, res => { showToast(res.message, "success"); document.getElementById('modal-finish').classList.add('hidden'); loadTechJobs(); }, btn);
         }
 
         // HISTORY & DASHBOARD
